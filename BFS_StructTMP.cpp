@@ -53,7 +53,7 @@ public:
 	void initSubstrateNetwork(char *filepath){//初始化
         FILE *fp;
         fp=fopen(filepath,"r");
-        if(fscanf(fp,"%d%d",&nodes,&links)){
+        if(fscanf(fp,"%d %d",&nodes,&links)){
             vector<int> tempmatrix(nodes,-1);//from common.h
             matrix.resize(nodes,tempmatrix);//之前实现CAA时直接在main中用的vector重新读取，还是在初始化时直接存比较简洁
             totalBW=0;
@@ -110,12 +110,18 @@ public:
                 sumbw+=mapLinks[i].bandwidth;
             }
         }
+        for(int i=0;i<mapLinks.size();i++){
+            if(mapLinks[i].to==nodeid){
+                sumbw+=mapLinks[i].bandwidth;
+            }
+        }
         return sumbw;
 	}
 	void sortNodes(){
         double cpu_bw[mapNodes.size()];
         for(int i=0;i<mapNodes.size();i++){
-            cpu_bw[i] = mapNodes[i].CPU+getNodeLinkedBW(mapNodes[i].nodeId);
+            cpu_bw[i] = mapNodes[i].CPU*getNodeLinkedBW(mapNodes[i].nodeId);
+//            cout<<mapNodes[i].CPU<<'*'<<getNodeLinkedBW(mapNodes[i].nodeId)<<' ';
         }
         for(int i=0;i<mapNodes.size()-1;i++){
             for(int j=0;j<mapNodes.size()-1-i;j++){
@@ -215,8 +221,14 @@ public:
 	}
 	void print(){
         for(int i=0;i<nodes;i++){
-            cout<<mapNodes.at(i).nodeId<<"  ";
-//            cout<<mapNodes.at(i).nodeId<<"  ";
+                cout<<mapNodes.at(i).nodeId<<"  ";
+        }
+        cout<<endl;
+        for(int i=0;i<nodes;i++){
+            for(int j=0;j<nodes;j++){
+                cout<<matrix[i][j]<<' ';
+            }
+            cout<<endl;
         }
 	}
     Node getnodebyId(int id){
@@ -251,13 +263,15 @@ struct Request{
     int requestId;
     int nodes;
     int links;
+    int arrival;
+    int duration;
     map<int,Node> mapNodes;
 	map<int,Link> mapLinks;
 	vector<vector<int>> matrix;
 	void initRequest(char *filepath){//初始化
         FILE *fp;
         fp=fopen(filepath,"r");
-        if(fscanf(fp,"%d%d",&nodes,&links)){
+        if(fscanf(fp,"%d%d%d%d",&nodes,&links,&arrival,&duration)){
             vector<int> tempmatrix(nodes,-1);//老师代码的common.h
             matrix.resize(nodes,tempmatrix);//之前实现CAA时直接在main中用的vector重新读取，还是在初始化时直接存比较简洁
             tempmatrix.clear();
@@ -332,12 +346,12 @@ struct Request{
                 cout<<mapNodes.at(i).nodeId<<"  ";
         }
         cout<<endl;
-        for(int i=0;i<nodes;i++){
-            for(int j=0;j<nodes;j++){
-                cout<<matrix[i][j]<<' ';
-            }
-            cout<<endl;
-        }
+//        for(int i=0;i<nodes;i++){
+//            for(int j=0;j<nodes;j++){
+//                cout<<matrix[i][j]<<' ';
+//            }
+//            cout<<endl;
+//        }
 	}
 	double getNodeLinkedBW(int nodeid){
         double sumbw=0;
@@ -357,6 +371,7 @@ struct Request{
         double cpu_bw[mapNodes.size()];
         for(int i=0;i<mapNodes.size();i++){
             cpu_bw[i] = mapNodes[i].CPU*getNodeLinkedBW(mapNodes[i].nodeId);
+//            cout<<mapNodes[i].CPU<<'*'<<getNodeLinkedBW(mapNodes[i].nodeId)<<' ';
         }
         for(int i=0;i<mapNodes.size()-1;i++){
             for(int j=0;j<mapNodes.size()-1-i;j++){
@@ -379,7 +394,7 @@ struct Request{
         if (v<0 || v>nodes)
             return -1;
         for (i = 0; i <nodes; i++)
-            if (matrix[v][i]!=0 && matrix[v][i]!=-1)
+            if (matrix[v][i]!=-1)
                 return i;
         return -1;
     }
@@ -388,7 +403,7 @@ struct Request{
         if (v<0 || v>nodes || w<0 || w>nodes)
             return -1;
         for (i = w+1 ; i < nodes; i++)
-            if (matrix[v][i]!=0 && matrix[v][i]!=-1)
+            if (matrix[v][i]!=-1)
                 return i;
         return -1;
     }
@@ -446,10 +461,8 @@ bool Initialize_SNUnit(SubstrateNetwork &sn,SNUnit &snunit){
 	return true;
 }
 void BFS_VNM(SubstrateNetwork &substrateNetwork,Request &request,map<int,int> &resultNodes,map<int,int>&resultLinks){
-	bool sNodeMapped[substrateNetwork.nodes];
-	bool reqNodeMapped[request.nodes];
-	memset(sNodeMapped,false,substrateNetwork.nodes);
-	memset(reqNodeMapped,false,request.nodes);
+	int sNodeMapped[substrateNetwork.nodes]={0};
+	int reqNodeMapped[request.nodes]={0};
     int reqQue[request.nodes];
     int sQue[substrateNetwork.nodes];
     resultNodes.clear();
@@ -461,13 +474,13 @@ void BFS_VNM(SubstrateNetwork &substrateNetwork,Request &request,map<int,int> &r
     int w,q;
 	for (int i = 0; i < request.nodes; ++i){
         Node p;
-		if(!reqNodeMapped[i]){
+		if(reqNodeMapped[request.mapNodes.at(i).nodeId]==0){
             p = substrateNetwork.mapNodes.at(i);
-            if(p.CPU > request.mapNodes.at(i).CPU&&(!reqNodeMapped[p.nodeId])){
+            if(p.CPU > request.mapNodes.at(i).CPU&&(reqNodeMapped[p.nodeId])){
                 resultNodes.insert(pair<int,int>(request.mapNodes.at(i).nodeId,p.nodeId));
 //                mappinglinks
-                reqNodeMapped[request.mapNodes.at(i).nodeId]=true;
-                sNodeMapped[p.nodeId]=true;
+                reqNodeMapped[request.mapNodes.at(i).nodeId]=1;
+                sNodeMapped[p.nodeId]=1;
                 reqQue[reqrear++]=request.mapNodes.at(i).nodeId;
                 sQue[sqrear++] = p.nodeId;
             }
@@ -483,8 +496,9 @@ void BFS_VNM(SubstrateNetwork &substrateNetwork,Request &request,map<int,int> &r
                             resultNodes.insert(pair<int,int>(w,q));
                             reqQue[reqrear++]= w;
                             sQue[sqrear++]   = q;
-                            reqNodeMapped[w]=true;
-                            sNodeMapped[q]=true;
+                            cout<<"req "<<w<<"sq "<<q<<endl;
+                            reqNodeMapped[w]=1;
+                            sNodeMapped[q]=1;
 //                            cout<<"while \n";
                         }
                     }
@@ -509,13 +523,13 @@ void BFS_VNM(SubstrateNetwork &substrateNetwork,Request &request,map<int,int> &r
         }
         resultLinks.insert(pair<int,int>(subfrom,subto));
     }
-    // 对余下的链路进行映射：
+//     对余下的链路进行映射：
 //     substrateNetwork.testFloyd();
 //     for(int i=0;i<request.links;i++){//映射余下的request
 //        map<int,int> temp;
-// //        if(!resultLinks.find(temp.insert(pair<int,int>(request.mapLinks.at(i).from,request.mapLinks.at(i).to)))){//
+//         if(!resultLinks.find(temp.insert(pair<int,int>(request.mapLinks.at(i).from,request.mapLinks.at(i).to)))){//
 //            substrateNetwork.Floyd(request.mapLinks.at(i).from,request.mapLinks.at(i).to);
-// //        }
+//         }
 //     }
 }
 int main()
@@ -524,27 +538,25 @@ int main()
     char filepath1[]="/home/waynamigo/Desktop/myDocuments/c++/substratenet";
     char filepath2[]="/home/waynamigo/Desktop/myDocuments/c++/requests";
     substrateNetwork.initSubstrateNetwork(filepath1);
-    substrateNetwork.sortNodes(); //按论文中的（CPU×邻接链路带宽和）从大到小对物理节点排序
-//    substrateNetwork.print();cout<<'\n';
+    substrateNetwork.sortNodes();cout<<'\n'; //按论文中的（CPU×邻接链路带宽和）从大到小对物理节点排序
     request.initRequest(filepath2);
     request.sortNodes();
-//    request.print();
-    cout<<"将物理网络加载到第三方集合中去:   ";
+    cout<<"将物理网络加载到第三方集合中:   ";
     if(Initialize_SNUnit(substrateNetwork,snunit)){
-        cout<<"success"<<endl;
+        cout<<"加载结束 无异常"<<endl;
     }
     double** shortestpath=new double*[substrateNetwork.nodes];//判断最短路的path
     set<int>setMapped;
 	vector<int>** sparray=new vector<int>*[substrateNetwork.nodes];
 	substrateNetwork.Init_shortestpath(shortestpath,sparray);
     cout<<"节点根据本文的节点资源度量模型（CPU×邻接链路带宽和）排序后：\n";
-    cout<<"物理节点顺序\n";substrateNetwork.print();cout<<endl;
+    cout<<"物理节点顺序\n";substrateNetwork.print();
     cout<<"虚拟节点顺序\n";request.print();cout<<endl;
     map<int,int> resNodes;
     map<int,int> resLinks;
     BFS_VNM(substrateNetwork,request,resNodes,resLinks);
     cout<<"节点映射的对应关系"<<endl;
-    cout<<"余下的未映射链路方案先显示见上 ↑编号1对应A，2对应B)\n";
+    cout<<"余下的未映射链路方案先显示于floyd算法计算的路径)\n";
     for(map<int,int>::iterator iter=resNodes.begin();iter!=resNodes.end();iter++){
         cout<<iter->first<<'\t'<<iter->second<<endl;
     }
@@ -552,20 +564,12 @@ int main()
     for(map<int,int>::iterator iter=resLinks.begin();iter!=resLinks.end();iter++){
         cout<<iter->first<<'\t'<<iter->second<<endl;
     }
-    // for (int i = 0; i < substrateNetwork.nodes; ++i)
-    // {
-    //     for (int j = 0; j < sizeof(shortestpath[i]); ++j)
-    //     {
-    //         cout<<shortestpath[i][j]<< ' ';
-    //     }
-    //     cout<<'\n';
-    // }
     double r_c = request.getR_C(shortestpath,setMapped);
     cout<<"收益开销比：" <<r_c<<endl;
 
     char resultfile[]="/home/waynamigo/Desktop/myDocuments/c++/result";
-    ofstream fout(resultfile,ios::app);
-    fout<< r_c<<','<<recv<<endl;
-    fout.close();
+//    ofstream fout(resultfile,ios::app);
+//    fout<< r_c<<endl;
+//    fout.close();
     return 0;
 }
