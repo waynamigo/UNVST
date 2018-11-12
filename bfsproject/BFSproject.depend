@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1537084876 source:/home/waynamigo/Desktop/myDocuments/c++/BFSproject/main.cpp
+	<iostream>
+	<cmath>
+	<fstream>
+	<string>
+	<vector>
+	<map>
+	<set>
+	<stack>
+	<algorithm>
+	<list>
+	<queue>
+	<cstring>
+
