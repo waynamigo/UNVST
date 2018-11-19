@@ -1,0 +1,1 @@
+cmd_/home/waynamigo/Documents/scripts/kernel/rolmatrix.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/waynamigo/Documents/scripts/kernel/rolmatrix.ko /home/waynamigo/Documents/scripts/kernel/rolmatrix.o /home/waynamigo/Documents/scripts/kernel/rolmatrix.mod.o ;  true
