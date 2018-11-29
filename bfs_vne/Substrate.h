@@ -7,6 +7,7 @@ public:
 	int links;
 	double totalCPU;
 	double totalBW;
+	double power;
 	map<int, Node> mapNodes;//这里根据nodeIndex进行存取
 	map<int, Link> mapLinks;//这里根据linkIndex进行存取
 	vector<vector<int>> matrix;//链路化成矩阵 便于floyd
@@ -16,10 +17,11 @@ public:
 	double getNodeLinkedBW(int nodeid);//用来排序的计算节点bandwidth总和
 	void sortNodes();//最初的排序操作
 	void testFloyd();//改成全部输出 便于手算结果
-//	double getlengtg(int from,int to){
-//        double length =0;
-//
-//	}
+	// double getlengtg(int from,int to){
+    //    double length =0;
+
+	// }
+    void initSNUnit(SNUnit &snunit);
 	void Floyd(int from,int to);//flod计算最短路径 // from,to为当前两节点对应的物理节点编号
 	void print();//查看结构体内容
     Node getnodebyId(int id);//按节点编号查找节点
@@ -43,6 +45,22 @@ public:
         return -1;
     }
 };
+void SubstrateNetwork::initSNUnit(SNUnit &snunit){
+    // int nodes;
+	// int links;
+	// vector<vector<int>> path;
+	// vector<vector<double>> dist;
+    snunit.links = links;
+    snunit.nodes = nodes;
+    vector<vector<int>>::iterator it;
+    it = snunit.path.begin;
+    for(int i=0;i<links;i++){
+        snunit.path.insert(mapLinks.at(i));   
+    }
+    for(int i=0;i<nodes;i++){
+        snunit.
+    }
+} 
 Node SubstrateNetwork::getnodebyId(int id){
     int i;
     for( i=0;i<nodes;i++){

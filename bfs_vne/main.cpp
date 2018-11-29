@@ -4,6 +4,7 @@
 #include"Substrate.h"
 #include"Simulatetest.h"
 #include<string>
+#include"calculateAVE.h"
 using namespace std;
 void test(Request request){
     int from,to;
@@ -41,13 +42,14 @@ bool Initialize_SNUnit(SubstrateNetwork &sn,SNUnit &snunit){
 		//取出每一条物理路径
 		int snFrom=sn.mapLinks[k].from;
 		int snTo=sn.mapLinks[k].to;
-		//double snBW=sn.mapLinks[sn.GetLinkIndex(snTo,snFrom)].residual_bw;//这里用剩余带宽
-		//if(snBW>=need_bw){
-//        snunit.dist[snFrom][snTo]=1;
-//        snunit.dist[snTo][snFrom]=1;
-//        snunit.path[snFrom][snTo]=snTo;//距离为1 只考虑hops
-//        snunit.path[snTo][snFrom]=snFrom;//距离为1 只考虑hops
-		//}
+        int linkid = sn.mapLinks[k].linkId;
+		double snBW=sn.mapLinks[sn.getNodeLinkedBW(linkid)].residual_bw;//这里用剩余带宽
+		// if(snBW>){先用着默认大于所需带宽的条件
+            snunit.dist[snFrom][snTo]=1;
+            snunit.dist[snTo][snFrom]=1;
+            snunit.path[snFrom][snTo]=snTo;//距离为1 只考虑hops
+            snunit.path[snTo][snFrom]=snFrom;//距离为1 只考虑hops
+		// }
 	}
 	for(int k=0;k<snunit.nodes;k++){//最外层循环一定是K，使用的是Floyd算法求解最短路径
 		for(int m=0; m<snunit.nodes ; m++){
@@ -61,7 +63,7 @@ bool Initialize_SNUnit(SubstrateNetwork &sn,SNUnit &snunit){
 	}
 	return true;
 }
-double getCost(Request &request,map<int,int> &resultNodes,map<int,int> &resultLinks){
+double getCost(Request &request,map<int,int> &resultNodes,map<int,int> &resultLinks){//获得映射成功request网络的开销
     double cost=0;
 	double cpu_revenue = 0;
 	double bw_revenue = 0;
@@ -74,7 +76,8 @@ double getCost(Request &request,map<int,int> &resultNodes,map<int,int> &resultLi
 	cost=(cpu_revenue + bw_revenue)*(request.duration);
 	return cost;
 }
-double getRev(Request &request,map<int,int> &resultNodes,map<int,int> &resultLinks){//vector<int>存取比较方便，但是改回来太麻烦 不改了
+double getRev(Request &request,map<int,int> &resultNodes,map<int,int> &resultLinks){//获得request的实际收益
+    //vector<int>存取比较方便，但是改回来太麻烦 不改了
 	double revenue=0;
 	double cpu_revenue = 0;
 	double bw_revenue = 0;
@@ -164,13 +167,12 @@ void BFS_VNM(SubstrateNetwork &substrateNetwork,Request &request,map<int,int> &r
 }
 double getSF(Request &request,map<int,int> &resultNodes,map<int,int>&resultLinks,SubstrateNetwork &substrateNetwork){
 //虚拟链路扩张因子的计算
-//虚拟链路扩张因子表示虚拟网络中 所有虚拟链路的映射路径长度 的平均值
+//虚拟链路扩张因子表示:虚拟网络中所有虚拟链路的映射路径长度的平均值
     double sf =0;
     int vlink =0;
     for(map<int,int>::iterator iter=resultLinks.begin();iter!=resultLinks.end();iter++){
-//        cout<<iter->first<<'\t'<<iter->second<<endl;
-       // sf += substrateNetwork.getlength(iter->first,iter->second);
-        //
+       cout<<iter->first<<'\t'<<iter->second<<endl;
+       sf += substrateNetwork.getNodeLinkedBW(iter->first);
     }
 }
 void display_bytime(Request &request,map<int,int> &resultNodes,map<int,int>&resultLinks){
@@ -185,11 +187,24 @@ void display_bytime(Request &request,map<int,int> &resultNodes,map<int,int>&resu
     acc = (double)sum_suc/request.links;
     cout<<"accuracy is: "<<acc<<endl;
 }
+//实现思路：先判断节点状态，公式为
+//(Power_max-Power_base)*被映射虚拟节点需要的cpu/物理节点所持有的CPU资源;
+void testPower(Simulatetest &simulator,SubstrateNetwork &substrateNetwork){
+    char power[]="/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/power";
+    FILE *fp;
+    fp=fopen(power,"r");
+    int num = simulator.PQ.size();
+    for(int i=0;i<num ;i++){
+        double power;
+        fscanf(fp,"%lf",&substrateNetwork.power);
+        printf(substrateNetwork.power);
+    }
+
+}
 void testSimulator(){
     vector<Request>requests;Request request;
     char filepath2[]="/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/reqs0/req";
-    char filename[]="/req";//!char filepath2[]="/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/reqs";
-
+    char filename[]="/req";//!char filepath2[]="/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/reqs"
     char filepath3[100];
     for(int folder = 0;folder<5 ;folder++){
         for(int filenum =0;filenum<200;filenum++){
@@ -202,17 +217,42 @@ void testSimulator(){
         }
     }
     for(int filenum = 0;filenum<10;filenum++){
-
             sprintf(filepath3,"%s%d.txt",filepath2,filenum);
             cout<<filepath3<<endl;
             request.initRequest(filepath3);
             request.sortNodes();
-            //requests.push_back(request);
-            //request.clean();
+            requests.push_back(request);
+            request.clean();
             request.print();
     }
-    Simulatetest simulator(requests);   
+    SubstrateNetwork substrateNetwork;
+    substrateNetwork.initSubstrateNetwork("/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/sub");
+    SNUnit snunit;
+    substrateNetwork.initSNUnit(snunit);
+    Simulatetest simulator(requests);
+    if(simulator.PQ.empty()){
+        cout<<"simulator模拟器初始化失败\n";
+    }else{
+        bool nodeMapFlag,linkMapFlag;//记录映射结果是否成功
+        int curIndex;//记录当前request的编号
+        int accept=0;//记录该request集合中 单个请求事件的接收个数
+        double done_cost=0,done_rev=0;
+        do{
+            nodeMapFlag=false;
+			linkMapFlag=false;
+			cout<<"index="<<curIndex<<endl;
+            map<int,int>resultmap_t;
+            map<int,int>resultlink_t;
+			simulator.PQ.push(Event(EVENT_DEPART,requests[curIndex].arrival+requests[curIndex].duration,curIndex));
+			if(nodeMapFlag&&linkMapFlag){//如果同时成功，表示此条request已经接收成功
+				done_rev+=getRev(requests[curIndex],resultmap_t,resultlink_t);
+				done_cost+=getCost(requests[curIndex],resultmap_t,resultlink_t);
+				accept++;
+			}
+        }while(!simulator.PQ.empty());
+    }
 }
+
 int main()
 {
     SubstrateNetwork substrateNetwork;Request request;SNUnit snunit;
@@ -222,43 +262,45 @@ int main()
     substrateNetwork.sortNodes();
     substrateNetwork.print();
     cout<<'\n'; //按论文中的（CPU×邻接链路带宽和）从大到小对物理节点排序
-//    for(int cnt=0;cnt<200;cnt++){//进行循环输入request文件的路径，
-//        char filepath2[]="/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/reqs4/req";
-//        char filepath3[30];
-//        sprintf(filepath3,"%s%d.txt",filepath2,cnt);
-//        request.initRequest(filepath3);
-//        request.sortNodes();
+    for(int cnt=0;cnt<200;cnt++){//进行循环输入request文件的路径，
+        char filepath2[]="/home/waynamigo/Desktop/myDocuments/c++/bfs_vne/reqs4/req";
+        char filepath3[30];
+        sprintf(filepath3,"%s%d.txt",filepath2,cnt);
+        request.initRequest(filepath3);
+        request.sortNodes();
 
-       // test(request);
-//        cout<<"将物理网络加载到第三方集合中:   ";
-//        if(Initialize_SNUnit(substrateNetwork,snunit)){
-//            cout<<"加载结束,无异常情况"<<endl;
-//        }
-//        double** shortestpath=new double*[substrateNetwork.nodes];//判断最短路的path
-//        set<int>setMapped;
-//        vector<int>** sparray=new vector<int>*[substrateNetwork.nodes];
-//        substrateNetwork.Init_shortestpath(shortestpath,sparray);
-//        cout<<"节点根据本文的节点资源度量模型（CPU×邻接链路带宽和）排序后：\n";
-//        cout<<"物理节点顺序\n";substrateNetwork.print();
-//        cout<<"虚拟节点顺序\n";request.print();cout<<endl;
-//        map<int,int> resNodes;
-//        map<int,int> resLinks;
+        test(request);
+
+        cout<<"将物理网络加载到第三方集合中:   ";
+        if(Initialize_SNUnit(substrateNetwork,snunit)){
+            cout<<"加载结束,无异常情况"<<endl;
+        }
+        double** shortestpath=new double*[substrateNetwork.nodes];//判断最短路的path
+        set<int>setMapped;
+        vector<int>** sparray=new vector<int>*[substrateNetwork.nodes];
+        substrateNetwork.Init_shortestpath(shortestpath,sparray);
+        cout<<"节点根据本文的节点资源度量模型（CPU×邻接链路带宽和）排序后：\n";
+        cout<<"物理节点顺序\n";substrateNetwork.print();
+        cout<<"虚拟节点顺序\n";request.print();cout<<endl;
+        map<int,int> resNodes;
+    
+        map<int,int> resLinks;
         testSimulator();
-//         BFS_VNM(substrateNetwork,request,resNodes,resLinks);
-//     //    cout<<"余下的未映射链路方案显示于floyd算法计算的路径\n";
-//     //    for(map<int,int>::iterator iter=resNodes.begin();iter!=resNodes.end();iter++){
-//     //        cout<<iter->first<<'\t'<<iter->second<<endl;
-//     //    }
-// //        cout<<"按照requests的编号,对应的物理链路映射的顺序"<<endl;
-// //        for(map<int,int>::iterator iter=resLinks.begin();iter!=resLinks.end();iter++){
-// //            cout<<iter->first<<'\t'<<iter->second<<endl;
-// //        }
-//         double r_c = request.getR_C(shortestpath,setMapped);
-//         cout<<"收益开销比：" <<r_c<<endl;
-//         char resultfile[]="/home/waynamigo/Desktop/myDocuments/c++/result";
-//         ofstream fout(resultfile,ios::app);
-//         fout<< r_c<<endl;//!<<','<<double(1000*resLinks.size())/(request.duration-request.arrival)
-//         fout.close();
-//    }
-    return 0;
+        BFS_VNM(substrateNetwork,request,resNodes,resLinks);
+    //    cout<<"余下的未映射链路方案显示于floyd算法计算的路径\n";
+    //    for(map<int,int>::iterator iter=resNodes.begin();iter!=resNodes.end();iter++){
+    //        cout<<iter->first<<'\t'<<iter->second<<endl;
+    //    }
+//        cout<<"按照requests的编号,对应的物理链路映射的顺序"<<endl;
+//        for(map<int,int>::iterator iter=resLinks.begin();iter!=resLinks.end();iter++){
+//            cout<<iter->first<<'\t'<<iter->second<<endl;
+//        }
+        double r_c = request.getR_C(shortestpath,setMapped);
+        cout<<"收益开销比：" <<r_c<<endl;
+        char resultfile[]="/home/waynamigo/Desktop/myDocuments/c++/rc&acc&sf";
+        fprintSF(resultfile,resLinks,request);
+        // ofstream fout(resultfile,ios::app);
+        // fout<< r_c<<endl;//!<<','<<double(1000*resLinks.size())/(request.duration-request.arrival)
+   }
+   return 0;
 }
