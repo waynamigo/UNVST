@@ -1,7 +1,7 @@
 #ifndef REQUEST_H_INCLUDED
 #define REQUEST_H_INCLUDED
 #include "Base.h"
-
+#define MAX_REQ_LINKS 100
 struct Request{
     int requestId;//虚拟网络请求索引号
     int nodes;//有多少虚拟节点
@@ -18,15 +18,23 @@ struct Request{
     double getCost(double **shortestpaths,set<int>&setMappedSN);//计算开销
     int hops(double **shortestpaths,set<int>&setMappedSN,int start);//计算跃点数hops
 	double getNodeLinkedBW(int nodeid);
-	void sortNodes();//排序函数,按
+	void sortNodes();//排序函数,按cpu*sum(bandwidth);
 	void clean();
 	void print();//用来看节点排序情况
+    void initEachNodesNeighbor(){
+        for(int i=0;i<links;i++){
+            int start = mapLinks[i].from;
+            int end = mapLinks[i].to;
+            mapNodes[start].nodeNeighbors.insert(end);
+            mapNodes[end].nodeNeighbors.insert(start);
+        }
+    }
 	double getR_C(double **shortestpath,set<int>&setMapped){//计算收益开销比
         return 1.0*(getCost(shortestpath,setMapped)/getReq());
 	}
 	int first_vertex(int v){
         int i;
-        if (v<0 || v>nodes)
+        if (v<0||v>nodes)
             return -1;
         for (i = 0; i <nodes; i++)
             if (matrix[v][i]!=-1)
@@ -44,6 +52,7 @@ struct Request{
     }
 };
 void Request::print(){//用来看节点排序情况
+    cout<<"用来看节点排序和矩阵情况"<<endl;
     for(int i=0;i<nodes;i++){
             cout<<mapNodes.at(i).nodeId<<"  ";
     }

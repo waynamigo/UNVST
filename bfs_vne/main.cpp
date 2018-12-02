@@ -12,57 +12,57 @@ void test(Request request){
     to =2;
     cout<<request.iflinked(from,to);
 }
-bool Initialize_SNUnit(SubstrateNetwork &sn,SNUnit &snunit){
-	//张培颖 2016-01-31 采用另外一种方式，先去掉不满足带宽的边，然后使用Floyd最短路径计算边的映射方案
-	int N=sn.nodes;
-	snunit.nodes=sn.nodes;//节点个数
-	snunit.links=sn.links;//边的条数
-	//下面三条语句初始化matrix矩阵，值都为-1
-	vector<int> innerMatrix(N,-1);//N代表节点的个数，-1代表初始化的值
-	snunit.path.resize(N,innerMatrix);//path[][]的初始化也都为-1
-	innerMatrix.clear();//释放内存空间
-	//下面的语句初始化距离，默认都是最大距离+∞
-	vector<double> innerDist(N,99999999);
-	snunit.dist.resize(N,innerDist);
-	innerDist.clear();
-	//初始化
-	for(int m=0;m<N;m++){
-		for(int n=0;n<N;n++){
-			if(m==n){
-				snunit.dist[m][n]=0;
-				snunit.path[m][n]=m;
-			}else{
-				snunit.dist[m][n]=99999999;
-				snunit.path[m][n]=-1;//no way out
-			}
-		}
-	}
-	//遍历当前物理网络中所有的边
-	for(int k=0;k<sn.links;k++){
-		//取出每一条物理路径
-		int snFrom=sn.mapLinks[k].from;
-		int snTo=sn.mapLinks[k].to;
-        int linkid = sn.mapLinks[k].linkId;
-		double snBW=sn.mapLinks[sn.getNodeLinkedBW(linkid)].residual_bw;//这里用剩余带宽
-		// if(snBW>){先用着默认大于所需带宽的条件
-            snunit.dist[snFrom][snTo]=1;
-            snunit.dist[snTo][snFrom]=1;
-            snunit.path[snFrom][snTo]=snTo;//距离为1 只考虑hops
-            snunit.path[snTo][snFrom]=snFrom;//距离为1 只考虑hops
-		// }
-	}
-	for(int k=0;k<snunit.nodes;k++){//最外层循环一定是K，使用的是Floyd算法求解最短路径
-		for(int m=0; m<snunit.nodes ; m++){
-			for(int n=0; n<snunit.nodes; n++){//!(fabs(snunit.dist[m][k]-999999)<0.001||fabs(snunit.dist[k][n]-999999)<0.001)&&
-				if(snunit.dist[m][n] > snunit.dist[m][k] + snunit.dist[k][n]){
-					snunit.dist[m][n] = snunit.dist[m][k] + snunit.dist[k][n];
-					snunit.path[m][n] = snunit.path[m][k];
-				}
-			}
-		}
-	}
-	return true;
-}
+// bool Initialize_SNUnit(SubstrateNetwork &sn,SNUnit &snunit){
+// 	//张培颖 2016-01-31 采用另外一种方式，先去掉不满足带宽的边，然后使用Floyd最短路径计算边的映射方案
+// 	int N=sn.nodes;
+// 	snunit.nodes=sn.nodes;//节点个数
+// 	snunit.links=sn.links;//边的条数
+// 	//下面三条语句初始化matrix矩阵，值都为-1
+// 	vector<int> innerMatrix(N,-1);//N代表节点的个数，-1代表初始化的值
+// 	snunit.path.resize(N,innerMatrix);//path[][]的初始化也都为-1
+// 	innerMatrix.clear();//释放内存空间
+// 	//下面的语句初始化距离，默认都是最大距离+∞
+// 	vector<double> innerDist(N,99999999);
+// 	snunit.dist.resize(N,innerDist);
+// 	innerDist.clear();
+// 	//初始化
+// 	for(int m=0;m<N;m++){
+// 		for(int n=0;n<N;n++){
+// 			if(m==n){
+// 				snunit.dist[m][n]=0;
+// 				snunit.path[m][n]=m;
+// 			}else{
+// 				snunit.dist[m][n]=99999999;
+// 				snunit.path[m][n]=-1;//no way out
+// 			}
+// 		}
+// 	}
+// 	//遍历当前物理网络中所有的边
+// 	for(int k=0;k<sn.links;k++){
+// 		//取出每一条物理路径
+// 		int snFrom=sn.mapLinks[k].from;
+// 		int snTo=sn.mapLinks[k].to;
+//         int linkid = sn.mapLinks[k].linkId;
+// 		double snBW=sn.mapLinks[sn.getNodeLinkedBW(linkid)].residual_bw;//这里用剩余带宽
+// 		// if(snBW>){先用着默认大于所需带宽的条件
+//             snunit.dist[snFrom][snTo]=1;
+//             snunit.dist[snTo][snFrom]=1;
+//             snunit.path[snFrom][snTo]=snTo;//距离为1 只考虑hops
+//             snunit.path[snTo][snFrom]=snFrom;//距离为1 只考虑hops
+// 		// }
+// 	}
+// 	for(int k=0;k<snunit.nodes;k++){//最外层循环一定是K，使用的是Floyd算法求解最短路径
+// 		for(int m=0; m<snunit.nodes ; m++){
+// 			for(int n=0; n<snunit.nodes; n++){//!(fabs(snunit.dist[m][k]-999999)<0.001||fabs(snunit.dist[k][n]-999999)<0.001)&&
+// 				if(snunit.dist[m][n] > snunit.dist[m][k] + snunit.dist[k][n]){
+// 					snunit.dist[m][n] = snunit.dist[m][k] + snunit.dist[k][n];
+// 					snunit.path[m][n] = snunit.path[m][k];
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return true;
+// }
 double getCost(Request &request,map<int,int> &resultNodes,map<int,int> &resultLinks){//获得映射成功request网络的开销
     double cost=0;
 	double cpu_revenue = 0;

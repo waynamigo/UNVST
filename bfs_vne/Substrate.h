@@ -1,6 +1,7 @@
 #ifndef SUBSTRATE_H_INCLUDED
 #define SUBSTRATE_H_INCLUDED
 #include "Base.h"
+#define MAX_REQ_LINKS 100
 class SubstrateNetwork{
 public:
 	int nodes;
@@ -21,6 +22,7 @@ public:
     //    double length =0;
 
 	// }
+    void InitEachneighbors();
     void initSNUnit(SNUnit &snunit);
 	void Floyd(int from,int to);//flod计算最短路径 // from,to为当前两节点对应的物理节点编号
 	void print();//查看结构体内容
@@ -45,22 +47,40 @@ public:
         return -1;
     }
 };
-void SubstrateNetwork::initSNUnit(SNUnit &snunit){
-    // int nodes;
-	// int links;
-	// vector<vector<int>> path;
-	// vector<vector<double>> dist;
-    snunit.links = links;
-    snunit.nodes = nodes;
-    vector<vector<int>>::iterator it;
-    it = snunit.path.begin;
-    for(int i=0;i<links;i++){
-        snunit.path.insert(mapLinks.at(i));   
+void SubstrateNetwork::InitEachneighbors(){
+    for(int i=0;i<nodes;i++){//对于每一个节点
+        for(int j=0;j<links;j++){//对于每一条链路
+            if(mapLinks[j].from == i ||mapLinks[j].to==i){
+                //if the start or end node number is the same as it, then add it to the neighbor set
+                mapNodes[i].linkNeighbors.insert(mapLinks[j].linkId);
+            }
+        }
     }
-    for(int i=0;i<nodes;i++){
-        snunit.
+    //初始化每个节点的邻居
+    for(int j=0;j<links;j++){//对于每一条链路
+        int start = mapLinks[j].from;
+        int end   = mapLinks[j].to;
+        mapNodes[start].nodeNeighbors.insert(end);
+        mapNodes[end].nodeNeighbors.insert(start);
     }
-} 
+}
+  
+// void SubstrateNetwork::initSNUnit(SNUnit &snunit){
+//     // int nodes;
+// 	// int links;
+// 	// vector<vector<int>> path;
+// 	// vector<vector<double>> dist;
+//     // snunit.links = links;
+//     // snunit.nodes = nodes;
+//     // vector<vector<int>>::iterator it;
+//     // it = snunit.path.begin;
+//     // for(int i=0;i<links;i++){
+//     //     snunit.path.insert(mapLinks.at(i));   
+//     // }
+//     // for(int i=0;i<nodes;i++){
+//     //     snunit.
+//     // }
+// } 
 Node SubstrateNetwork::getnodebyId(int id){
     int i;
     for( i=0;i<nodes;i++){
@@ -73,7 +93,13 @@ void SubstrateNetwork::print(){//查看读取及排序后的节点
     for(int i=0;i<nodes;i++){
             cout<<mapNodes.at(i).nodeId<<"  ";
     }
-    cout<<endl;
+     for(int i=0;i<nodes;i++){
+        for(int j=0;j<nodes;j++){
+            cout<<matrix[i][j]<<' ';
+        }
+        cout<<endl;
+    }
+//change map output;
 }
 void SubstrateNetwork::Floyd(int from,int to){//flod计算最短路径{
     int row = 0;
@@ -191,7 +217,7 @@ void SubstrateNetwork::initSubstrateNetwork(char *filepath){//初始化
         fclose(fp);
     }
 }
-void SubstrateNetwork::Init_shortestpath(double **shortestpath,vector<int>**sparray){//借助一个最短路径的数组，记录i,j下标，进行hops的计算
+void SubstrateNetwork ::Init_shortestpath(double **shortestpath,vector<int>**sparray){//借助一个最短路径的数组，记录i,j下标，进行hops的计算
     for(int i=0;i<nodes;i++){
         shortestpath[i]=new double[nodes];
         sparray[i]=new vector<int>[nodes];//初始化数组对象
