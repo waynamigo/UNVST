@@ -8,44 +8,11 @@
 #include <fcntl.h>
 #define BUFFERSIZE 10
 char buffer[BUFFERSIZE],*input,*path,*str,*p;
-
 int ff(char *ss,char *ff);
 int gg(char *a,char *b);
 int is_fileexist(char *comm);
 
-int splitShell(char ** arg,char * str){
-    int splcnt = 0;
-    char *s =NULL;
-    s=strtok(str," ");
-    while(s != NULL)
-    {
-       *arg++ = s;
-       splcnt ++;
-       s = strtok(NULL," ");
-    }
-    return splcnt;
-}
-            //     // if(str[i] == ' '|| str[i] == '\t' || str[i] == '\0')
-            //     // {
-            //     //     if(j == 0) continue;
-            //     //     else
-            //     //     {
-            //     //         buffer[j++] = '\0';
-            //     //         arg[k] = (char*)malloc(sizeof(char)*j);
-            //     //         strcpy(arg[k],buffer);
-            //     //         k++;
-            //     //     }
-            //     // }
-            //     // else
-            //     // {
-            //     //     if(str[i] == '&'&& str[i+1] == '\0')
-            //     //     {
-            //     //         is_back = 1;
-            //     //         continue;
-            //     //     }
-            //     //     buffer[j++] = str[i];
-            //     // }
-            // }
+int splitShell(char ** arg,char * str);
 int main()
 {
     char lc_char;
@@ -158,4 +125,16 @@ int is_fileexist(char *comm)
         p++;
     }
     return -1;
+}
+int splitShell(char ** arg,char * str){
+    int splcnt = 0;
+    char *s =NULL;
+    s=strtok(str," ");
+    while(s != NULL)
+    {
+       *arg++ = s;
+       splcnt ++;
+       s = strtok(NULL," ");
+    }
+    return splcnt;
 }
