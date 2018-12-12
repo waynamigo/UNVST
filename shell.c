@@ -35,7 +35,7 @@ int main()
             lc_char = getchar();
             count++;
         }
-        // check the length of command_char
+        // check the length of command_char resize 10
         if(count > BUFFERSIZE)// define a buffer for bin/ less than 10
         {
             printf("define a bufferlength for /usr/bin/ less than 10\n");
@@ -46,7 +46,7 @@ int main()
         {
             for(count = 0; count <= num; count++)
             {
-                BUFFER[count][li_inputlen[count]] = '\0';//the buffer_end = '\0',end it
+                BUFFER[count][li_inputlen[count]] = '\0';//the buffer_end
             }
         }
         for(count = 0; count <= num; count++)
@@ -67,6 +67,7 @@ int main()
                 break;
             }else if(strcmp(arg[0],"down")==0){
                 char *halt ="ls";
+		printf("rewrite the row before checking");
             	execl("/bin/ls",halt);
             }else if(strcmp(arg[0],"who")==0){
             	printf("1607020223 wangfuyan\n");
@@ -100,7 +101,7 @@ int main()
 }
 
 
-int is_fileexist(char *comm)
+int is_fileexist(char *comm)//check command under /bin
 {
     char * path, * p;
     int i;
