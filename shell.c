@@ -11,7 +11,6 @@ char buffer[BUFFERSIZE],*input,*path,*str,*p;
 int ff(char *ss,char *ff);
 int gg(char *a,char *b);
 int is_fileexist(char *comm);
-
 int splitShell(char ** arg,char * str);
 int main()
 {
@@ -35,7 +34,7 @@ int main()
             lc_char = getchar();
             count++;
         }
-        // check the length of command_char resize 10
+        // check the length of command_char
         if(count > BUFFERSIZE)// define a buffer for bin/ less than 10
         {
             printf("define a bufferlength for /usr/bin/ less than 10\n");
@@ -46,7 +45,7 @@ int main()
         {
             for(count = 0; count <= num; count++)
             {
-                BUFFER[count][li_inputlen[count]] = '\0';//the buffer_end
+                BUFFER[count][li_inputlen[count]] = '\0';//the buffer_end = '\0',end it
             }
         }
         for(count = 0; count <= num; count++)
@@ -67,12 +66,28 @@ int main()
                 break;
             }else if(strcmp(arg[0],"down")==0){
                 char *halt ="ls";
-		printf("rewrite the row before checking");
-            	execl("/bin/ls",halt);
+                printf("execl(\"/bin/halt\",\"halt\");\n");
+            	// execl("/bin/ls",halt);
             }else if(strcmp(arg[0],"who")==0){
             	printf("1607020223 wangfuyan\n");
             }else if(strcmp(arg[0],"pwd")==0){
             	printf("%s  (from innercommand)\n",get_current_dir_name());
+            }else if(strcmp(arg[0],"&")==0){
+                // char *temp;
+                // strcpy(temp,arg[0]);
+                // strcpy(arg[0],arg[1]);
+                // strcpy(arg[1],temp);
+                if((pid = fork()) == 0){
+                    //place a new thread for the followed in recent system environments
+                    printf("pid = %5d ",getpid());
+                    printf("pid = %d ",pid);
+                    execv(arg[1],NULL);
+                    is_back=1;
+                }
+                 else if(is_back == 0)
+                    waitpid(pid,&status,0);//from <sys/type.h&wait.h>
+                for(i = 0; i < k; i++)
+                    free(arg[i]);
             }
             //outer commands
             else if(is_bj == 0)
@@ -89,19 +104,20 @@ int main()
                 	//place a new thread for the followed in recent system environments
                     execv(buffer,arg);// from <unistd.h>
                     is_back=1;
-                    continue;
+                    
                 }
                 else if(is_back == 0)
                     waitpid(pid,&status,0);//from <sys/type.h&wait.h>
                 for(i = 0; i < k; i++)
                     free(arg[i]);
+
             }
         }
     }
 }
 
 
-int is_fileexist(char *comm)//check command under /bin
+int is_fileexist(char *comm)
 {
     char * path, * p;
     int i;
