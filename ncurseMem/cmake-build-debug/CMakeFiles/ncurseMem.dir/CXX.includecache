@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/waynamigo/Desktop/myDocuments/c++/memory/ncurseMem/memNode.h
+
+/home/waynamigo/Desktop/myDocuments/c++/memory/ncurseMem/memory.cpp
+bits/stdc++.h
+-
+simulator.h
+/home/waynamigo/Desktop/myDocuments/c++/memory/ncurseMem/simulator.h
+
+/home/waynamigo/Desktop/myDocuments/c++/memory/ncurseMem/simulator.h
+list
+-
+algorithm
+-
+iostream
+-
+ncurses.h
+-
+memNode.h
+/home/waynamigo/Desktop/myDocuments/c++/memory/ncurseMem/memNode.h
+
