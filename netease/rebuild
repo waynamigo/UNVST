@@ -1,0 +1,12 @@
+
+# 先创建软件包目录
+mkdir -p extract/DEBIAN
+# 用dpkg解压
+dpkg-deb -x neteasemusic.deb extract/
+dpkg-deb -e neteasemusic.deb extract/DEBIAN
+
+
+# 建立软件包生成目录
+mkdir build
+# 重新打包
+dpkg-deb -b extract/ build/
